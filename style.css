@@ -29,6 +29,7 @@
     gap: 1em;
     justify-content: space-between;
     align-items: center;
+    background-color: beige;
 }
 
 .cart__item-wrapper, .cart__edit-item-wrapper {
@@ -40,9 +41,45 @@
     align-items: center;
 }
 
+.inventory__subtract-btn, .cart__subtract-btn {
+    cursor: pointer;
+    background-color: red;
+    color: white;
+    border-radius: 4px
+}
+
+.inventory__add-btn, .cart__add-btn {
+    cursor: pointer;
+    background-color: green;
+    color: white;
+    border-radius: 4px
+}
+
+.add-to-cart-btn, .cart__edit-btn {
+    cursor: pointer;
+    background-color: blue;
+    color: white;
+    border-radius: 4px
+}
+
+.cart__delete-btn, .checkout-btn {
+    cursor: pointer;
+    background-color: black;
+    color: white;
+    border-radius: 4px
+}
+
+.save-btn {
+    cursor: pointer;
+    background-color: white;
+    border-radius: 4px
+}
+
 .cart__edit-item-wrapper {
     display: none;
 }
+
+
 
 .cart-wrapper {
     display: flex;

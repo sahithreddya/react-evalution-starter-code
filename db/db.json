@@ -4,6 +4,11 @@
       "content": "apple",
       "id": 1,
       "amount": 3
+    },
+    {
+      "content": "peach",
+      "id": 2,
+      "amount": 3
     }
   ],
   "inventory": [
