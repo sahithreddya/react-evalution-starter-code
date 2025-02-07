@@ -12,7 +12,7 @@
 }
 
 .inventory-container, .cart-container {
-    border: 1px solid black;
+    /* border: 1px solid black; */
     flex: 1;
     padding: 1em;
     display: flex;
@@ -22,7 +22,7 @@
 }
 
 .inventory__item, .cart__item {
-    border: 1px solid black;
+    /* border: 1px solid black; */
     padding: 1em;
     display: flex;
     flex-direction: row;
@@ -30,6 +30,7 @@
     justify-content: space-between;
     align-items: center;
     background-color: beige;
+    border-radius: 4px;
 }
 
 .cart__item-wrapper, .cart__edit-item-wrapper {
