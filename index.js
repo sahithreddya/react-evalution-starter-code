@@ -107,8 +107,12 @@ const View = (() => {
   //Lists
   const inventory_list_el = document.querySelector(".inventory__list");
   const cart_list_el = document.querySelector(".cart__list");
+  const inventory_addToCartBtn = document.querySelectorAll(".add-to-cart-btn");
 
-  const create_InventoryItem = (itemDetails) => {
+  let inventoryList = [];
+  let cartList = [];
+
+  const create_InventoryItem = (itemDetails, handleAddToCart) => {
     const listItem = document.createElement("li");
     listItem.id = itemDetails.id;
     listItem.className = "inventory__item";
@@ -131,13 +135,27 @@ const View = (() => {
     subtractBtn.append(document.createTextNode("-"));
     addToCartBtn.append(document.createTextNode("add to cart"));
 
+    //Adding listeners
+    addBtn.addEventListener("click", () => {
+      let amount = parseInt(amountSpan.textContent);
+      amountSpan.textContent = (++amount).toString();
+    });
+    subtractBtn.addEventListener("click", () => {
+      let amount = parseInt(amountSpan.textContent);
+      if (amount <= 0) return;
+      amountSpan.textContent = (--amount).toString();
+    });
+    addToCartBtn.addEventListener("click", () => {
+      handleAddToCart({ ...itemDetails, amount: parseInt(amountSpan.textContent) });
+      amountSpan.textContent = 0;
+    });
 
     listItem.append(contentSpan, subtractBtn, amountSpan, addBtn, addToCartBtn);
 
     return listItem;
   }
 
-  const create_CartItem = (itemDetails) => {
+  const create_CartItem = (itemDetails, handleDelete) => {
     console.log(`itemdetails: ${itemDetails.content}`);
     const listItem = document.createElement("li");
     listItem.id = itemDetails.id;
@@ -185,38 +203,32 @@ const View = (() => {
     listItem.append(wrapperDiv, editableWrapperDiv);
 
     //Adding listeners
-    deleteBtn.addEventListener("click", () => {
-      Model.deleteFromCart(itemDetails.id);
-    });
     editBtn.addEventListener("click", () => {
       wrapperDiv.style.display = "flex" ? "none" : "flex";
       editableWrapperDiv.style.display = "none" ? "flex" : "none";
     });
-    addBtn.addEventListener("click", () => {
-      Model.updateCart(itemDetails.id, itemDetails.amount + 1);
-    });
-    subtractBtn.addEventListener("click", () => {
-      Model.updateCart(itemDetails.id, itemDetails.amount - 1);
-    });
-    saveBtn.addEventListener("click", () => {
-      wrapperDiv.classList.toggle("hidden");
-      editableWrapperDiv.classList.toggle("hidden");
+    deleteBtn.addEventListener("click", () => {
+      handleDelete(itemDetails.id);
     });
 
     return listItem;
   }
 
-  const renderLists = (inventory, cart) => {
+  const renderLists = (inventory, cart, handleFuncs) => {
+    console.log("rendering lists");
+    inventoryList = inventory;
+    cartList = cart;
     inventory_list_el.innerHTML = "";
-    // cart_list_el.innerHTML = "";
-    console.log("inventory is ", inventory);
-    console.log("cart is ", cart);
+    cart_list_el.innerHTML = "";
+    // console.log("inventory is ", inventory);
+    // console.log("cart is ", cart);
     inventory.forEach(item => {
-      inventory_list_el.append(create_InventoryItem(item));
+      inventory_list_el.append(create_InventoryItem(item, handleFuncs.handleAddToCart));
     });
     cart.forEach(item => {
-      cart_list_el.append(create_CartItem(item));
+      cart_list_el.append(create_CartItem(item, handleFuncs.handleDelete));
     })
+
   }
   return {
     renderLists
@@ -227,7 +239,27 @@ const Controller = ((model, view) => {
   // implement your logic for Controller
   const state = new model.State();
 
-  const handleAddToCart = () => { };
+  const handleAddToCart = (item) => {
+    let itemExists = state.cart.find((cartItem) => cartItem.id === item.id);
+    if (itemExists) {
+      console.log('exists');
+      model.updateCart(itemExists.id, itemExists.amount + item.amount).then((data) => {
+        state.cart = state.cart.map((item) => item.id === data.id ? data : item);
+        console.log("udpate is:", data)
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
+    else {
+      console.log('doesnt exist');
+      model.addToCart(item).then((data) => {
+        state.cart = [...state.cart, data];
+        console.log(data);
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
+  };
 
   const handleEdit = (event) => {
     event.preventDefault();
@@ -235,14 +267,30 @@ const Controller = ((model, view) => {
 
   const handleEditAmount = () => { };
 
-  const handleDelete = () => { };
+  const handleDelete = (id) => {
+    model.deleteFromCart(id).then((data) => {
+      state.cart = state.cart.filter((item) => item.id !== id);
+      console.log(data);
+    }).catch((err) => {
+      console.log(err);
+    });
+  };
 
   const handleCheckout = () => { };
+
+  const handleFuncs = {
+    handleAddToCart,
+    handleEdit,
+    handleEditAmount,
+    handleDelete,
+    handleCheckout
+  };
 
   const init = () => {
 
     state.subscribe(() => {
-      View.renderLists(state.inventory, state.cart);
+      View.renderLists(state.inventory, state.cart, handleFuncs);
+      console.log("State change : ", state.inventory, state.cart);
     });
     
     model.getInventory().then((data) => {
@@ -254,20 +302,6 @@ const Controller = ((model, view) => {
       state.cart = data;
     });
   };
-  // Model.getCart().then((data) => {
-  //   console.log(data);
-  // })
-
-  let newItem = {
-    "id": 3,
-    "content": "banana",
-    "amount": 2
-  }
-  // Model.addToCart(newItem).then((data) => {
-  //   console.log(data);
-  // }).catch((err) => {
-  //   console.log(err);
-  // })
 
   return {
     init,
