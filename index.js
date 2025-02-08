@@ -86,6 +86,7 @@ const Model = (() => {
       this.#cart = newCart;
       this.#onChange();
     }
+
     set inventory(newInventory) {
       this.#inventory = newInventory;
       this.#onChange();
@@ -107,12 +108,18 @@ const View = (() => {
   //Lists
   const inventory_list_el = document.querySelector(".inventory__list");
   const cart_list_el = document.querySelector(".cart__list");
-  const inventory_addToCartBtn = document.querySelectorAll(".add-to-cart-btn");
-
-  let inventoryList = [];
-  let cartList = [];
+  const checkoutBtn = document.querySelector(".checkout-btn");
 
   const create_InventoryItem = (itemDetails, handleAddToCart) => {
+    // Constructing below list item
+    // <li class="inventory__item">
+    //   <span class="inventory__item-content">apple</span>
+    //   <button class="inventory__add-btn">-</button>
+    //   <span class="inventory__item-amount">0</span>
+    //   <button class="inventory__subtract-btn">+</button>
+    //   <button class="add-to-cart-btn">add to cart</button>
+    // </li>
+    
     const listItem = document.createElement("li");
     listItem.id = itemDetails.id;
     listItem.className = "inventory__item";
@@ -146,7 +153,9 @@ const View = (() => {
       amountSpan.textContent = (--amount).toString();
     });
     addToCartBtn.addEventListener("click", () => {
-      handleAddToCart({ ...itemDetails, amount: parseInt(amountSpan.textContent) });
+      let amount = parseInt(amountSpan.textContent);
+      if (amount <= 0) return;
+      handleAddToCart({ ...itemDetails, amount: amount });
       amountSpan.textContent = 0;
     });
 
@@ -155,8 +164,18 @@ const View = (() => {
     return listItem;
   }
 
-  const create_CartItem = (itemDetails, handleDelete) => {
-    console.log(`itemdetails: ${itemDetails.content}`);
+  const create_CartItem = (itemDetails, handleEdit, handleDelete) => {
+    // Constructing below list item
+    // <li id="1" class="cart__item">
+    //   <div class="cart__item-wrapper" style="display: none;"><span
+    //     class="cart__item-content">apple</span><span>x</span><span class="cart__item-amount">3</span><button
+    //       class="cart__delete-btn">delete</button><button class="cart__edit-btn">edit</button></div>
+    //   <div class="cart__edit-item-wrapper" style="display: flex;"><span
+    //     class="cart__item-content">apple</span><button class="cart__subtract-btn">-</button><span
+    //       class="cart__item-amount">3</span><button class="cart__add-btn">+</button><button
+    //         class="cart__save-btn">save</button></div>
+    // </li>
+
     const listItem = document.createElement("li");
     listItem.id = itemDetails.id;
     listItem.className = "cart__item";
@@ -170,6 +189,8 @@ const View = (() => {
     const contentAdjSpan = document.createElement("span");
     const amountSpan = document.createElement("span");
     amountSpan.className = "cart__item-amount";
+    const editAmountSpan = document.createElement("span");
+    editAmountSpan.className = "cart__item-amount";
 
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "cart__delete-btn";
@@ -177,8 +198,9 @@ const View = (() => {
     editBtn.className = "cart__edit-btn";
 
     contentSpan.append(document.createTextNode(itemDetails.content));
-    contentAdjSpan.append(document.createTextNode("X"));
+    contentAdjSpan.append(document.createTextNode("x"));
     amountSpan.append(document.createTextNode(itemDetails.amount));
+    editAmountSpan.append(document.createTextNode(itemDetails.amount));
     deleteBtn.append(document.createTextNode("delete"));
     editBtn.append(document.createTextNode("edit"));
 
@@ -198,7 +220,7 @@ const View = (() => {
     saveBtn.append(document.createTextNode("save"));
 
     wrapperDiv.append(contentSpan, contentAdjSpan, amountSpan, deleteBtn, editBtn);
-    editableWrapperDiv.append(contentSpan.cloneNode(true), subtractBtn, amountSpan.cloneNode(true), addBtn, saveBtn);
+    editableWrapperDiv.append(contentSpan.cloneNode(true), subtractBtn, editAmountSpan, addBtn, saveBtn);
 
     listItem.append(wrapperDiv, editableWrapperDiv);
 
@@ -210,24 +232,32 @@ const View = (() => {
     deleteBtn.addEventListener("click", () => {
       handleDelete(itemDetails.id);
     });
+    addBtn.addEventListener("click", () => {
+      let amount = parseInt(editAmountSpan.textContent);
+      editAmountSpan.textContent = (++amount).toString();
+    });
+    subtractBtn.addEventListener("click", () => {
+      let amount = parseInt(editAmountSpan.textContent);
+      if (amount <= 0) return;
+      editAmountSpan.textContent = (--amount).toString();
+    });
+    saveBtn.addEventListener("click", () => {
+      handleEdit({ ...itemDetails, amount: parseInt(editAmountSpan.textContent) });
+    });
 
     return listItem;
   }
 
   const renderLists = (inventory, cart, handleFuncs) => {
-    console.log("rendering lists");
-    inventoryList = inventory;
-    cartList = cart;
     inventory_list_el.innerHTML = "";
     cart_list_el.innerHTML = "";
-    // console.log("inventory is ", inventory);
-    // console.log("cart is ", cart);
     inventory.forEach(item => {
       inventory_list_el.append(create_InventoryItem(item, handleFuncs.handleAddToCart));
     });
     cart.forEach(item => {
-      cart_list_el.append(create_CartItem(item, handleFuncs.handleDelete));
-    })
+      cart_list_el.append(create_CartItem(item, handleFuncs.handleEditAmount, handleFuncs.handleDelete));
+    });
+    checkoutBtn.addEventListener("click", handleFuncs.handleCheckout);
 
   }
   return {
@@ -242,16 +272,9 @@ const Controller = ((model, view) => {
   const handleAddToCart = (item) => {
     let itemExists = state.cart.find((cartItem) => cartItem.id === item.id);
     if (itemExists) {
-      console.log('exists');
-      model.updateCart(itemExists.id, itemExists.amount + item.amount).then((data) => {
-        state.cart = state.cart.map((item) => item.id === data.id ? data : item);
-        console.log("udpate is:", data)
-      }).catch((err) => {
-        console.log(err);
-      });
+      return handleEditAmount({...item, amount: itemExists.amount + item.amount});
     }
     else {
-      console.log('doesnt exist');
       model.addToCart(item).then((data) => {
         state.cart = [...state.cart, data];
         console.log(data);
@@ -261,11 +284,16 @@ const Controller = ((model, view) => {
     }
   };
 
-  const handleEdit = (event) => {
-    event.preventDefault();
+  const handleEditAmount = (item) => {
+    if(item.amount <= 0) 
+      return handleDelete(item.id);
+    model.updateCart(item.id, item.amount).then((data) => {
+      state.cart = state.cart.map((item) => item.id === data.id ? data : item);
+      console.log("update is:", data)
+    }).catch((err) => {
+      console.log(err);
+    });
   };
-
-  const handleEditAmount = () => { };
 
   const handleDelete = (id) => {
     model.deleteFromCart(id).then((data) => {
@@ -276,31 +304,31 @@ const Controller = ((model, view) => {
     });
   };
 
-  const handleCheckout = () => { };
+  const handleCheckout = () => {
+    model.checkout().then((data) => {
+      console.log(data);
+      state.cart = [];
+      alert("checkout successful");
+    })
+  };
 
   const handleFuncs = {
     handleAddToCart,
-    handleEdit,
     handleEditAmount,
     handleDelete,
     handleCheckout
   };
 
   const init = () => {
-
     state.subscribe(() => {
-      View.renderLists(state.inventory, state.cart, handleFuncs);
+      if (state.inventory.length === 0) return;
+      view.renderLists(state.inventory, state.cart, handleFuncs);
       console.log("State change : ", state.inventory, state.cart);
     });
-    
-    model.getInventory().then((data) => {
-      console.log("inventory is ", data);
-      state.inventory = data;
-    });
-    model.getCart().then((data) => {
-      console.log("cart is ", data);
-      state.cart = data;
-    });
+    Promise.all([model.getInventory(), model.getCart()]).then((data) => {
+      state.cart = data[1];
+      state.inventory = data[0];
+    })
   };
 
   return {

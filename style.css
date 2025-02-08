@@ -1,35 +1,34 @@
 #app {
-    /* width: 100%; */
     margin: 2em;
+    height: 70%;
     align-self: center;
     justify-content: center;
     gap: 1em;
     display: flex;
     flex-direction: row;
     border: 1px solid black;
+    border-radius: 4px;
     padding: 2em;
     justify-content: space-between;
+    background-color: #f9f4f6;
 }
 
 .inventory-container, .cart-container {
-    /* border: 1px solid black; */
     flex: 1;
     padding: 1em;
     display: flex;
     flex-direction: column;
     gap: 1em;
-    /* justify-content: space-between; */
 }
 
 .inventory__item, .cart__item {
-    /* border: 1px solid black; */
     padding: 1em;
     display: flex;
     flex-direction: row;
     gap: 1em;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
-    background-color: beige;
+    background-color:#dbd3be;
     border-radius: 4px;
 }
 
@@ -38,27 +37,27 @@
     flex: 1;
     flex-direction: row;
     gap: 1em;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
 }
 
 .inventory__subtract-btn, .cart__subtract-btn {
     cursor: pointer;
-    background-color: red;
+    background-color: #a73e3f;
     color: white;
     border-radius: 4px
 }
 
 .inventory__add-btn, .cart__add-btn {
     cursor: pointer;
-    background-color: green;
+    background-color: #68a347;
     color: white;
     border-radius: 4px
 }
 
 .add-to-cart-btn, .cart__edit-btn {
     cursor: pointer;
-    background-color: blue;
+    background-color: #3562a1;
     color: white;
     border-radius: 4px
 }
@@ -70,7 +69,7 @@
     border-radius: 4px
 }
 
-.save-btn {
+.cart__save-btn {
     cursor: pointer;
     background-color: white;
     border-radius: 4px
@@ -92,6 +91,7 @@
 
 ul {
     padding: 0;
+    margin: 0;
 }
 
 ul > li {
@@ -102,6 +102,11 @@ ul > li {
 h1 {
     text-align: center;
     margin: 0;
+}
+
+button {
+    padding: 4px 8px;
+    border-color: transparent;
 }
 
 body {
